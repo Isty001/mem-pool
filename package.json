@@ -1,0 +1,19 @@
+{
+  "name": "mem-pool",
+  "version": "0.0.1",
+  "repo": "isty001/mem-pool",
+  "description": "Fix member sized, growing memory pool",
+  "keywords": [
+    "memory",
+    "poll",
+    "memory pool"
+  ],
+  "license": "MIT",
+  "src": [
+    "src/mem_pool.c",
+    "src/mem_pool.h"
+  ],
+  "development": {
+    "jlcordeiro/minunit": "*"
+  }
+}
