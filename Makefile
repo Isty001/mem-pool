@@ -1,5 +1,5 @@
 compile-test:
-	gcc -g -Wall -Wextra -D MEMORY_POOL_DEBUG src/*.c test/*.c -o test.o
+	gcc -g -Wall -Wextra src/*.c test/*.c -o test.o
 
 test:
 	make compile-test

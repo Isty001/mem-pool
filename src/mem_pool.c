@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdalign.h>
+#include <stddef.h>
 #include "mem_pool.h"
 
 
@@ -39,11 +41,23 @@ static Buffer *new_buffer(MemPool *pool)
     return buff;
 }
 
+static size_t align(size_t block_size)
+{
+    block_size = block_size < sizeof(Block) ? sizeof(Block) : block_size;
+    size_t align = alignof(max_align_t);
+
+    if (block_size % align) {
+        return block_size + (align - block_size % align);
+    }
+
+    return block_size;
+}
+
 MemPool *pool_init(size_t block_size, size_t increase_count)
 {
     MemPool *pool = malloc(sizeof(MemPool));
-    pool->memb_size = block_size < sizeof(Block) ? sizeof(Block) : block_size;
-    pool->buff_size = increase_count * block_size;
+    pool->memb_size = align(block_size);
+    pool->buff_size = increase_count * pool->memb_size;
     pool->buff_head = new_buffer(pool);
     pool->buff_last = pool->buff_head;
     pool->block_head = NULL;
