@@ -3,6 +3,11 @@
 
 Basic memory pool implementation, for reusable memory blocks.
 
+#### Installation with [clib](https://github.com/clibs/clib)
+
+```
+$ clib install isty001/mem-pool
+```
 
 #### Usage:
 
