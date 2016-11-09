@@ -12,7 +12,7 @@ $ clib install isty001/mem-pool
 #### Usage:
 
 Initialize a new MemPool, with the given `block_size` and `increase_count`. 
-If it runs out of space, it'll create a new internal Buffer with `increase_count * block_size size`.
+If it runs out of space, it'll create a new internal Buffer with `increase_count * block_size` size.
 
 ```c
 #include "mem_pool.h"
