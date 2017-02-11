@@ -1,7 +1,7 @@
 ### Memory Pool
 
 
-Basic memory pool implementation, for reusable memory blocks.
+Dynamic memory pool implementation, for reusable memory blocks, using `pthread mutex` locks
 
 
 #### Usage:

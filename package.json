@@ -1,11 +1,13 @@
 {
   "name": "mem-pool",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "repo": "isty001/mem-pool",
   "description": "Fix member sized, growing memory pool",
   "keywords": [
     "memory",
-    "poll",
+    "popl",
+    "pthread",
+    "mutex",
     "memory pool"
   ],
   "license": "MIT",

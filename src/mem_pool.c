@@ -1,7 +1,22 @@
 #include <stdio.h>
 #include <stdalign.h>
 #include <stddef.h>
+#include <pthread.h>
 #include "mem_pool.h"
+
+
+#define check(res)                              \
+    if (0 != res) {                             \
+        fprintf(stderr, "pthread failure");     \
+        exit(EXIT_FAILURE);                     \
+    }
+
+#define lock(pool) \
+    check(pthread_mutex_lock(&pool->mutex));
+
+#define unlock(pool)                                \
+    check(pthread_cond_broadcast(&pool->cond));     \
+    check(pthread_mutex_unlock(&pool->mutex));
 
 
 typedef struct buffer Buffer;
@@ -9,25 +24,24 @@ typedef struct buffer Buffer;
 typedef struct block Block;
 
 
-struct buffer
-{
+struct buffer {
     void *memory;
     void *end;
     Buffer *next;
 };
 
-struct block
-{
+struct block {
     Block *next;
 };
 
-struct mem_pool
-{
+struct mem_pool {
     size_t memb_size;
     size_t buff_size;
     Buffer *buff_head;
     Buffer *buff_last;
     Block *block_head;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
 };
 
 
@@ -62,6 +76,9 @@ MemPool *pool_init(size_t block_size, size_t increase_count)
     pool->buff_last = pool->buff_head;
     pool->block_head = NULL;
 
+    check(pthread_mutex_init(&pool->mutex, NULL));
+    check(pthread_cond_init(&pool->cond, NULL));
+
     return pool;
 }
 
@@ -69,6 +86,7 @@ static void *from_free_list(MemPool *pool)
 {
     Block *tmp = pool->block_head;
     pool->block_head = tmp->next;
+    unlock(pool);
 
     return tmp;
 }
@@ -77,12 +95,15 @@ static void *from_buffer(MemPool *pool, Buffer *buff)
 {
     void *ptr = buff->memory;
     buff->memory += pool->memb_size;
+    unlock(pool);
 
     return ptr;
 }
 
 void *pool_alloc(MemPool *pool)
 {
+    lock(pool);
+
     if (pool->block_head) {
         return from_free_list(pool);
     }
@@ -99,6 +120,8 @@ void *pool_alloc(MemPool *pool)
 
 bool pool_has_ptr(MemPool *pool, void *ptr)
 {
+    lock(pool);
+
     void *from;
     Buffer *buff = pool->buff_head;
 
@@ -106,10 +129,14 @@ bool pool_has_ptr(MemPool *pool, void *ptr)
         from = buff->end - pool->buff_size;
 
         if (ptr >= from && ptr <= buff->end) {
+            unlock(pool);
+
             return true;
         }
         buff = buff->next;
     }
+    unlock(pool);
+
     return false;
 }
 
@@ -119,10 +146,13 @@ int pool_free(MemPool *pool, void *ptr)
         return -1;
     }
 
+    lock(pool);
+
     Block *new = (Block *) ptr;
     Block *tmp = pool->block_head;
     pool->block_head = new;
     new->next = tmp;
+    unlock(pool);
 
     return 0;
 }
@@ -137,5 +167,8 @@ void pool_destroy(MemPool *pool)
         free(buff->end - pool->buff_size);
         free(buff);
     }
+
+    pthread_mutex_destroy(&pool->mutex);
+    pthread_cond_destroy(&pool->cond);
     free(pool);
 }
