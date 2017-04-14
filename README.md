@@ -28,13 +28,31 @@ Get a block:
 void *ptr = pool_alloc(pool);
 ```
 
-When not needed anymore, give it back to the pool, and make it reusable:
+You can iterate through all the blocks allocated with the given pool like this:
 
 ```c
-pool_free(pool, ptr1);
+static void callback(void *item)
+{
+    //
+}
+
+pool_foreach(pool, callback);
 ```
 
-If everything is finished, then actually free all the memory allocated:
+To check if the block is allocated with the pool:
+
+```c
+if (pool_has_ptr(pool, ptr)) { /* */ }
+```
+
+When not needed anymore, give the pointer back to the pool, and make it reusable. This will return -1
+if the pointer is not known by the pool.
+
+```c
+pool_free(pool, ptr);
+```
+
+To actually free all the memory allocated:
 
 ```c
 pool_destroy(pool);

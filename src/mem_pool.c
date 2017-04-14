@@ -25,7 +25,8 @@ typedef struct block Block;
 
 
 struct buffer {
-    void *memory;
+    void *start;
+    void *current;
     void *end;
     Buffer *next;
 };
@@ -48,9 +49,10 @@ struct mem_pool {
 static Buffer *new_buffer(MemPool *pool)
 {
     Buffer *buff = malloc(sizeof(Buffer));
-    buff->memory = malloc(pool->buff_size);
+    buff->start = malloc(pool->buff_size);
+    buff->current = buff->start;
     buff->next = NULL;
-    buff->end = buff->memory + pool->buff_size;
+    buff->end = buff->current + pool->buff_size;
 
     return buff;
 }
@@ -93,8 +95,8 @@ static void *from_free_list(MemPool *pool)
 
 static void *from_buffer(MemPool *pool, Buffer *buff)
 {
-    void *ptr = buff->memory;
-    buff->memory += pool->memb_size;
+    void *ptr = buff->current;
+    buff->current += pool->memb_size;
     unlock(pool);
 
     return ptr;
@@ -109,7 +111,7 @@ void *pool_alloc(MemPool *pool)
     }
     Buffer *buff = pool->buff_last;
 
-    if (buff->memory == buff->end) {
+    if (buff->current == buff->end) {
         buff = new_buffer(pool);
         pool->buff_last->next = buff;
         pool->buff_last = buff;
@@ -138,6 +140,21 @@ bool pool_has_ptr(MemPool *pool, void *ptr)
     unlock(pool);
 
     return false;
+}
+
+void pool_foreach(MemPool *pool, PoolForeach callback)
+{
+    lock(pool);
+
+    Buffer *buff = pool->buff_head;
+
+    while (buff) {
+        for (void *block = buff->start; block < buff->current; block += pool->memb_size) {
+            callback(block);
+        }
+        buff = buff->next;
+    }
+    unlock(pool);
 }
 
 int pool_free(MemPool *pool, void *ptr)

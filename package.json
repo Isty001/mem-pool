@@ -1,6 +1,6 @@
 {
   "name": "mem-pool",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repo": "isty001/mem-pool",
   "description": "Fix member sized, growing memory pool",
   "keywords": [

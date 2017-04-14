@@ -8,6 +8,8 @@
 
 typedef struct mem_pool MemPool;
 
+typedef void (*PoolForeach)(void *block);
+
 
 /**
  * @return a new MemPool, with the given block size. If it runs out of space,
@@ -21,9 +23,14 @@ MemPool *pool_init(size_t block_size, size_t increase_count);
 void *pool_alloc(MemPool *pool);
 
 /**
- * @return true if the pointer was allocated by the Pool
+ * @return true if the block was allocated by the Pool
  */
 bool pool_has_ptr(MemPool *pool, void *ptr);
+
+/**
+ * Iterates through all the blocks allocated with the given pool
+ */
+void pool_foreach(MemPool *pool, PoolForeach callback);
 
 /**
  * Makes the pointer reusable

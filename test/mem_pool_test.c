@@ -38,9 +38,37 @@ MU_TEST(test_pool)
     pool_destroy(pool);
 }
 
+static int ADDED = 0;
+
+static void add_items(int *item)
+{
+    ADDED += *item;
+}
+
+MU_TEST(test_foreach)
+{
+    MemPool *pool = pool_init(sizeof(int), 2);
+    int *a, *b, *c;
+
+    a = pool_alloc(pool);
+    *a = 100;
+    b = pool_alloc(pool);
+    *b = 200;
+    c = pool_alloc(pool);
+    *c = 50;
+
+    pool_foreach(pool, (PoolForeach) add_items);
+
+    mu_assert_int_eq(350, ADDED);
+
+    pool_destroy(pool);
+}
+
 int main(void)
 {
     MU_RUN_TEST(test_pool);
+    MU_RUN_TEST(test_foreach);
+
     MU_REPORT();
 
     return 0;
