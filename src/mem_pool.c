@@ -15,7 +15,6 @@
     check(pthread_mutex_lock(&pool->mutex));
 
 #define unlock(pool)                                \
-    check(pthread_cond_broadcast(&pool->cond));     \
     check(pthread_mutex_unlock(&pool->mutex));
 
 
@@ -42,7 +41,6 @@ struct mem_pool {
     Buffer *buff_last;
     Block *block_head;
     pthread_mutex_t mutex;
-    pthread_cond_t cond;
 };
 
 
@@ -79,7 +77,6 @@ MemPool *pool_init(size_t block_size, size_t increase_count)
     pool->block_head = NULL;
 
     check(pthread_mutex_init(&pool->mutex, NULL));
-    check(pthread_cond_init(&pool->cond, NULL));
 
     return pool;
 }
@@ -186,6 +183,5 @@ void pool_destroy(MemPool *pool)
     }
 
     pthread_mutex_destroy(&pool->mutex);
-    pthread_cond_destroy(&pool->cond);
     free(pool);
 }
