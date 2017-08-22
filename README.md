@@ -28,12 +28,14 @@ Get a block:
 void *ptr = pool_alloc(pool);
 ```
 
-You can iterate through all the blocks allocated with the given pool like this:
+You can iterate through all the blocks allocated with the given pool like this, if
+the callback returns a non-zero value, the loop will be stopped:
 
 ```c
 static void callback(void *item)
 {
     //
+    return 0;
 }
 
 pool_foreach(pool, callback);

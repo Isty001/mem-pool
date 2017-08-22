@@ -147,7 +147,9 @@ void pool_foreach(MemPool *pool, PoolForeach callback)
 
     while (buff) {
         for (void *block = buff->start; block < buff->current; block += pool->memb_size) {
-            callback(block);
+            if (0 != callback(block)) {
+                break;
+            }
         }
         buff = buff->next;
     }

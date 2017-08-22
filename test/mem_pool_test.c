@@ -40,9 +40,14 @@ MU_TEST(test_pool)
 
 static int ADDED = 0;
 
-static void add_items(int *item)
+static int add_items(int *item)
 {
+    if (50 == *item) {
+        return -1;
+    }
     ADDED += *item;
+
+    return 0;
 }
 
 MU_TEST(test_foreach)
@@ -59,7 +64,7 @@ MU_TEST(test_foreach)
 
     pool_foreach(pool, (PoolForeach) add_items);
 
-    mu_assert_int_eq(350, ADDED);
+    mu_assert_int_eq(300, ADDED);
 
     pool_destroy(pool);
 }

@@ -8,7 +8,7 @@
 
 typedef struct mem_pool MemPool;
 
-typedef void (*PoolForeach)(void *block);
+typedef int (*PoolForeach)(void *block);
 
 
 /**
