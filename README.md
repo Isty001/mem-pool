@@ -1,7 +1,7 @@
 ### Memory Pool
 
 
-Dynamic memory pool implementation, for reusable memory blocks, using `pthread mutex` locks
+Dynamically growing, fixed element sized memory pool, for reusable memory blocks, using `pthread mutex` locks
 
 #### Installation with [clib](https://github.com/clibs/clib)
 
