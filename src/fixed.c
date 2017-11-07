@@ -1,40 +1,16 @@
 #include <stdio.h>
-#include <stdalign.h>
-#include <stddef.h>
-#include <pthread.h>
-#include "mem_pool.h"
+#include "internals.h"
+#include "../include/mem_pool.h"
 
 
-#define check(res)                              \
-    if (0 != res) {                             \
-        fprintf(stderr, "pthread failure");     \
-        exit(EXIT_FAILURE);                     \
-    }
-
-#define lock(pool) \
-    check(pthread_mutex_lock(&pool->mutex));
-
-#define unlock(pool)                                \
-    check(pthread_mutex_unlock(&pool->mutex));
+typedef struct Block Block;
 
 
-typedef struct buffer Buffer;
-
-typedef struct block Block;
-
-
-struct buffer {
-    void *start;
-    void *current;
-    void *end;
-    Buffer *next;
-};
-
-struct block {
+struct Block {
     Block *next;
 };
 
-struct mem_pool {
+struct FixedMemPool {
     size_t memb_size;
     size_t buff_size;
     Buffer *buff_head;
@@ -44,35 +20,12 @@ struct mem_pool {
 };
 
 
-static Buffer *new_buffer(MemPool *pool)
+FixedMemPool *pool_fixed_init(size_t block_size, size_t increase_count)
 {
-    Buffer *buff = malloc(sizeof(Buffer));
-    buff->start = malloc(pool->buff_size);
-    buff->current = buff->start;
-    buff->next = NULL;
-    buff->end = buff->current + pool->buff_size;
-
-    return buff;
-}
-
-static size_t align(size_t block_size)
-{
-    block_size = block_size < sizeof(Block) ? sizeof(Block) : block_size;
-    size_t align = alignof(max_align_t);
-
-    if (block_size % align) {
-        return block_size + (align - block_size % align);
-    }
-
-    return block_size;
-}
-
-MemPool *pool_init(size_t block_size, size_t increase_count)
-{
-    MemPool *pool = malloc(sizeof(MemPool));
-    pool->memb_size = align(block_size);
+    FixedMemPool *pool = malloc(sizeof(FixedMemPool));
+    pool->memb_size = mem_align(block_size < sizeof(Block) ? sizeof(Block) : block_size);
     pool->buff_size = increase_count * pool->memb_size;
-    pool->buff_head = new_buffer(pool);
+    pool->buff_head = buffer_new(pool->buff_size);
     pool->buff_last = pool->buff_head;
     pool->block_head = NULL;
 
@@ -81,7 +34,7 @@ MemPool *pool_init(size_t block_size, size_t increase_count)
     return pool;
 }
 
-static void *from_free_list(MemPool *pool)
+static void *from_free_list(FixedMemPool *pool)
 {
     Block *tmp = pool->block_head;
     pool->block_head = tmp->next;
@@ -90,7 +43,7 @@ static void *from_free_list(MemPool *pool)
     return tmp;
 }
 
-static void *from_buffer(MemPool *pool, Buffer *buff)
+static void *from_buffer(FixedMemPool *pool, Buffer *buff)
 {
     void *ptr = buff->current;
     buff->current += pool->memb_size;
@@ -99,7 +52,7 @@ static void *from_buffer(MemPool *pool, Buffer *buff)
     return ptr;
 }
 
-void *pool_alloc(MemPool *pool)
+void *pool_fixed_alloc(FixedMemPool *pool)
 {
     lock(pool);
 
@@ -109,7 +62,7 @@ void *pool_alloc(MemPool *pool)
     Buffer *buff = pool->buff_last;
 
     if (buff->current == buff->end) {
-        buff = new_buffer(pool);
+        buff = buffer_new(pool->buff_size);
         pool->buff_last->next = buff;
         pool->buff_last = buff;
     }
@@ -117,7 +70,7 @@ void *pool_alloc(MemPool *pool)
     return from_buffer(pool, buff);
 }
 
-bool pool_has_ptr(MemPool *pool, void *ptr)
+bool pool_fixed_is_allocated(FixedMemPool *pool, void *ptr)
 {
     lock(pool);
 
@@ -139,7 +92,7 @@ bool pool_has_ptr(MemPool *pool, void *ptr)
     return false;
 }
 
-void pool_foreach(MemPool *pool, PoolForeach callback)
+void pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback)
 {
     lock(pool);
 
@@ -156,9 +109,9 @@ void pool_foreach(MemPool *pool, PoolForeach callback)
     unlock(pool);
 }
 
-int pool_free(MemPool *pool, void *ptr)
+int pool_fixed_free(FixedMemPool *pool, void *ptr)
 {
-    if (!pool_has_ptr(pool, ptr)) {
+    if (!pool_fixed_is_allocated(pool, ptr)) {
         return -1;
     }
 
@@ -173,7 +126,7 @@ int pool_free(MemPool *pool, void *ptr)
     return 0;
 }
 
-void pool_destroy(MemPool *pool)
+void pool_fixed_destroy(FixedMemPool *pool)
 {
     Buffer *buff, *head = pool->buff_head;
 
