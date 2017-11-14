@@ -12,6 +12,16 @@ typedef struct VariadicMemPool VariadicMemPool;
 
 typedef int (*PoolForeach)(void *block);
 
+typedef enum {
+    MEM_BLOCK_FREE,
+    MEM_BLOCK_ALLOCATED,
+    MEM_BLOCK_UNKOWN
+} MemBlockState;
+
+typedef struct {
+    MemBlockState state;
+    size_t size;
+} MemBlockInfo;
 
 /**
  * @return a new MemPool, with the given block size. If it runs out of space,
@@ -21,7 +31,7 @@ FixedMemPool *pool_fixed_init(size_t block_size, size_t increase_count);
 
 void *pool_fixed_alloc(FixedMemPool *pool);
 
-bool pool_fixed_is_allocated(FixedMemPool *pool, void *ptr);
+MemBlockInfo pool_fixed_block_info(FixedMemPool *pool, void *ptr);
 
 /**
  * Iterates through all the blocks allocated with the given pool
@@ -40,13 +50,15 @@ void pool_fixed_destroy(FixedMemPool *pool);
 /**
  *
  */
-VariadicMemPool *pool_variadic_init(size_t grow_size);
+VariadicMemPool *pool_variadic_init(size_t grow_size, size_t tolerance_percent);
 
 void *pool_variadic_alloc(VariadicMemPool *pool, size_t size);
 
-bool pool_variadic_has(VariadicMemPool *pool, void *ptr);
+MemBlockInfo pool_variadic_block_info(VariadicMemPool *pool, void *ptr);
 
 int pool_variadic_free(VariadicMemPool *pool, void *ptr);
+
+void pool_variadic_destroy(VariadicMemPool *pool);
 
 
 size_t mem_align(size_t size);
