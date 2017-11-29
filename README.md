@@ -16,10 +16,11 @@ There are two main use cases when allocating:
     * This is useful when you want to store a large number of the same size of objects, this type of pool does a bit less work to allocate new blocks
 * Variadic sized objects
     * This is basically a generic allocator, that is capable of allocating a **best fitting** block by storing some meta data:
+```
     |                           Pool                            |
     |       Buffer                |       Buffer                |
     | H | B     | H | B | H | B   | H| B |      H| B            |
-
+```
 *H: Header B: Block*
 
 When allocating a given size of block, a header is also store which contains the size of the block, and pointer to the previous header in the buffer. This is required to merge neighbouring blocks when the pointer is given back to the pool, so it can be defragmented. The stored size also helps us to find the best fitting block from the free list.
