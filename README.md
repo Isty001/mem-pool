@@ -31,7 +31,7 @@ All the pointers returned by the pools are pointing to *aligned* blocks.
 
 To use the library you only need to `#include <mem_pool/mem_pool.h>`
 
-#### <a name="fixed-pool">FixedMemPool</a>
+### <a name="fixed-pool">FixedMemPool</a>
 
 Initialization:
 
@@ -89,7 +89,7 @@ To actually free all the memory allocated:
 pool_fixed_destroy(pool);
 ```
 
-#### <a name="variadic-pool">VariadicMemPool</a>
+### <a name="variadic-pool">VariadicMemPool</a>
 
 This type of pool has a very similar API.
 
