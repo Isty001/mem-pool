@@ -89,7 +89,7 @@ To actually free all the memory allocated:
 pool_fixed_destroy(pool);
 ```
 
-#### <a name="variadic-pool">(VariadicMemPool)</a>
+#### <a name="variadic-pool">VariadicMemPool</a>
 
 This type of pool has a very similar API.
 
