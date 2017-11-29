@@ -2,6 +2,10 @@
 #include "../include/mem_pool.h"
 
 
+// The size of a block cannot be 0, so if we are looking 
+#define SIZE_RESETED 0
+
+
 struct SizedBlock {
     Header header;
     SizedBlock *next_in_free_list;
@@ -35,25 +39,32 @@ VariadicMemPool *pool_variadic_init(size_t grow_size, size_t tolerance_percent)
 
 static void *from_buffer(Buffer *buff, size_t header_size, size_t block_size)
 {
-    Header *header = buff->current;
+    Header *header = buff->curr_ptr;
     header->size = block_size;
-    header->prev_in_buff = buff->current;
+    header->prev_in_buff = buff->prev_ptr;
 
-    buff->current += (header_size + block_size);
+    buff->prev_ptr = buff->curr_ptr;
+    buff->curr_ptr += (header_size + block_size);
 
     return (char *)header + header_size;
 }
 
-static void *best_fit_from_free_list(VariadicMemPool *pool, size_t block_size)
+static void *best_fit_from_free_list(VariadicMemPool *pool, size_t required_size)
 {
-    SizedBlock *block = pool->block_head;
+    SizedBlock **curr = &pool->block_head;
+    long block_size, diff;
 
-    while (block) {
-        if ((block->header.size / block_size) * 100 <= pool->tolerance_percent) {
+    while (*curr) {
+        block_size = (*curr)->header.size;
+        diff = labs(block_size - (long)required_size);
 
-            return block + pool->header_size;
+        if ((diff * 100) / ((block_size + required_size) / 2) <= pool->tolerance_percent) {
+            SizedBlock *block = *curr;
+            *curr = (*curr)->next_in_free_list;
+
+            return (char *)block + pool->header_size;
         }
-        block = block->next_in_free_list;
+        curr = &(*curr)->next_in_free_list;
     }
 
     return NULL;
@@ -79,7 +90,6 @@ void *pool_variadic_alloc(VariadicMemPool *pool, size_t size)
     ptr = from_buffer(buff, pool->header_size, block_size);
     unlock(pool);
 
-
     return ptr;
 }
 
@@ -89,56 +99,18 @@ static int delete_block_from_free_list(VariadicMemPool *pool, SizedBlock *block)
 
     while (*curr) {
         if ((*curr) == block) {
-            *curr = block;
-            return 0;
+            *curr = block->next_in_free_list;
+            return 1;
         }
         curr = &(*curr)->next_in_free_list;
-    }
-
-    return -1;
-}
-
-static SizedBlock *find_in_free_list(VariadicMemPool *pool, void *ptr)
-{
-    SizedBlock *block = pool->block_head;
-
-    while (block) {
-        if (block + pool->header_size == ptr) {
-            return block;
-        }
-        block = block->next_in_free_list;
-    }
-
-    return NULL;
-}
-
-static size_t find_size_in_buffer(VariadicMemPool *pool, void *ptr)
-{
-    if (buffer_list_has(pool->buff_head, ptr)) {
-        return *(size_t *)ptr - pool->header_size;
     }
 
     return 0;
 }
 
-MemBlockInfo pool_variadic_block_info(VariadicMemPool *pool, void *ptr)
+bool pool_variadic_is_associated(VariadicMemPool *pool, void *ptr)
 {
-    size_t size = 0;
-    MemBlockState state = MEM_BLOCK_UNKOWN;
-    SizedBlock *block;
-
-    lock(pool);
-
-    if ((block = find_in_free_list(pool, ptr))) {
-        size = block->header.size;
-        state = MEM_BLOCK_FREE;
-    } else if ((size = find_size_in_buffer(pool, ptr))) {
-        state = MEM_BLOCK_ALLOCATED;
-    }
-
-    unlock(pool);
-
-    return (MemBlockInfo) {.state = state, .size = size};
+    return buffer_list_has(pool->buff_head, ptr);
 }
 
 static SizedBlock *append(SizedBlock *to, SizedBlock *from, size_t header_size)
@@ -167,11 +139,12 @@ static SizedBlock *merge_next_free_blocks(VariadicMemPool *pool, Buffer *buff, S
 
 static SizedBlock *merge_previous_free_blocks(VariadicMemPool *pool, SizedBlock *block)
 {
-    SizedBlock *prev = NULL;
+    SizedBlock *prev = block->header.prev_in_buff;
 
-    while ((prev = block->header.prev_in_buff)) {
+    while (prev) {
         if (delete_block_from_free_list(pool, prev)) {
             block = append(prev, block, pool->header_size);
+            prev = prev->header.prev_in_buff;
         } else {
             break;
         }
@@ -199,9 +172,8 @@ int pool_variadic_free(VariadicMemPool *pool, void *ptr)
         unlock(pool);
         return -1;
     } else {
-        defragment(pool, buff, new);
+        new = defragment(pool, buff, new);
     }
-
     SizedBlock *tmp = pool->block_head;
     pool->block_head = new;
     new->next_in_free_list = tmp;

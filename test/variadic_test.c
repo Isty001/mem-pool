@@ -19,14 +19,13 @@ struct test {
 
 static void assert_initials(const size_t header_size, int *num, struct test *structure, struct test *array)
 {
-    assert_size_in_header(sizeof(int), header_size, num)
+    assert_size_in_header(sizeof(int), header_size, num);
     mu_assert_int_eq(100, *num);
 
     assert_size_in_header(sizeof(struct test), header_size, structure)
     mu_assert_int_eq(10, structure->i);
     mu_assert_int_eq(0, strcmp(structure->str, "Hello"));
 
-    assert_size_in_header(2 * sizeof(struct test), header_size, array)
     mu_assert_int_eq(20, array[0].i);
     mu_assert_int_eq(0, strcmp(array[0].str, "Test"));
 
@@ -34,29 +33,61 @@ static void assert_initials(const size_t header_size, int *num, struct test *str
     mu_assert_int_eq(0, strcmp(array[1].str, "C"));
 }
 
+static void test_defragmentation_in_first_buff(VariadicMemPool *pool, int *num, struct test *structure)
+{
+    mu_assert_int_eq(0, pool_variadic_free(pool, num));
+
+    mu_assert_int_eq(0, pool_variadic_free(pool, structure));
+
+    // The two freed *aligned* blocks, including a Header should be enough for this
+    struct test *arr = pool_variadic_alloc(pool, 5 * sizeof(struct test));
+
+    mu_assert((void *)num == (void *)arr, "");
+}
+
+static void test_defragmentation_in_second_buff(VariadicMemPool *pool, struct test *array)
+{
+    int *num_1, *num_2;
+
+    mu_assert_int_eq(0, pool_variadic_free(pool, array));
+
+    num_1 = pool_variadic_alloc(pool, sizeof(int));
+    mu_assert((void *)num_1 == (void *)array, "");
+
+    *num_1 = 100;
+
+    num_2 = pool_variadic_alloc(pool, sizeof(int));
+    *num_2 = 200;
+
+    mu_assert_int_eq(100, *num_1);
+    mu_assert_int_eq(200, *num_2);
+}
+
 /**
  * Initial Layout:
  *
- * Buffer 1: |h| int |h| struct test
- * Buffer 2: |h| struct test | struct test
+ * Buffer 1: |h| int num |h| struct test structure
+ * Buffer 2: |h| struct test array[2]
  */
-MU_TEST(test_pool)
+MU_TEST(test_alloc)
 {
     const size_t header_size = mem_align(sizeof(Header));
 
     VariadicMemPool *pool = pool_variadic_init(2 * item_size(Header) + item_size(int) + item_size(struct test), 10);
 
     int *num = pool_variadic_alloc(pool, sizeof(int));
-    mu_assert_int_eq(MEM_BLOCK_ALLOCATED, pool_variadic_block_info(pool, num).state);
+    mu_assert(pool_variadic_is_associated(pool, num), "Should be known by the pool");
     *num = 100;
 
     struct test *structure = pool_variadic_alloc(pool, sizeof(struct test));
+    mu_assert(pool_variadic_is_associated(pool, structure), "Should be known by the pool");
 
     structure->i = 10;
     memcpy(structure->str, "Hello", 5);
     structure->str[5] = '\0';
 
     struct test *array = pool_variadic_alloc(pool, 2 * sizeof(struct test));
+    mu_assert(pool_variadic_is_associated(pool, array), "Should be known by the pool");
 
     array[0].i = 20;
     array[1].i = 30;
@@ -69,11 +100,15 @@ MU_TEST(test_pool)
 
     assert_initials(header_size, num, structure, array);
 
+    test_defragmentation_in_first_buff(pool, num, structure);
+    test_defragmentation_in_second_buff(pool, array);
+
+    pool_variadic_destroy(pool);
 }
 
 void run_dynamic_pool_test(void)
 {
-    MU_RUN_TEST(test_pool);
+    MU_RUN_TEST(test_alloc);
 
     MU_REPORT();
 }

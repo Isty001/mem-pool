@@ -23,18 +23,17 @@ MU_TEST(test_pool)
     mu_assert_int_eq(expected, ptr2 - ptr1);
     mu_assert(ptr3 - ptr2 > expected, "This should be in a new Buffer");
 
-    mu_assert(MEM_BLOCK_ALLOCATED == pool_fixed_block_info(pool, ptr1).state, "This should be allocated");
-    mu_assert(MEM_BLOCK_ALLOCATED == pool_fixed_block_info(pool, ptr3).state, "This should be allocated");
+    mu_assert(pool_fixed_is_associated(pool, ptr1), "This should be allocated");
+    mu_assert(pool_fixed_is_associated(pool, ptr2), "This should be allocated");
 
     prev = ptr1;
     pool_fixed_free(pool, ptr1);
-    mu_assert(MEM_BLOCK_FREE == pool_fixed_block_info(pool, ptr1).state, "This should be in the free list");
 
     ptr4 = pool_fixed_alloc(pool);
     mu_assert(prev == ptr4, "The same pointer should be returned from the free list");
 
     void *unknown = NULL;
-    mu_assert(MEM_BLOCK_UNKOWN == pool_fixed_block_info(pool, unknown).state, "This shouldn't be known by the Pool");
+    mu_assert(false == pool_fixed_is_associated(pool, unknown), "This shouldn't be known by the Pool");
 
     pool_fixed_destroy(pool);
 }

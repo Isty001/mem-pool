@@ -32,7 +32,8 @@ typedef struct Buffer Buffer;
 
 struct Buffer {
     void *start;
-    void *current;
+    void *prev_ptr;
+    void *curr_ptr; /* This is only tracked for variadic blocks */
     void *end;
     Buffer *next;
 };
@@ -61,7 +62,7 @@ Buffer *buffer_list_find(Buffer *head, void *ptr);
 
 static inline bool buffer_has_space(Buffer *buff, size_t size)
 {
-    return buff->end - buff->current >= (long)size;
+    return buff->end - buff->curr_ptr >= (long)size;
 }
 
 static inline bool buffer_has(Buffer *buff, void *ptr)

@@ -45,8 +45,8 @@ static void *from_free_list(FixedMemPool *pool)
 
 static void *from_buffer(FixedMemPool *pool, Buffer *buff)
 {
-    void *ptr = buff->current;
-    buff->current += pool->memb_size;
+    void *ptr = buff->curr_ptr;
+    buff->curr_ptr += pool->memb_size;
     unlock(pool);
 
     return ptr;
@@ -61,7 +61,7 @@ void *pool_fixed_alloc(FixedMemPool *pool)
     }
     Buffer *buff = pool->buff_last;
 
-    if (buff->current == buff->end) {
+    if (buff->curr_ptr == buff->end) {
         buff = buffer_new(pool->buff_size);
         pool->buff_last->next = buff;
         pool->buff_last = buff;
@@ -70,36 +70,9 @@ void *pool_fixed_alloc(FixedMemPool *pool)
     return from_buffer(pool, buff);
 }
 
-static bool in_free_list(FixedMemPool *pool, void *ptr)
+bool pool_fixed_is_associated(FixedMemPool *pool, void *ptr)
 {
-    Block *block = pool->block_head;
-
-    while (block) {
-        if (block == ptr) {
-            return true;
-        }
-        block = block->next;
-    }
-
-    return false;
-}
-
-MemBlockInfo pool_fixed_block_info(FixedMemPool *pool, void *ptr)
-{
-    MemBlockInfo info = {.size = pool->memb_size};
-
-    lock(pool);
-
-    if (in_free_list(pool, ptr)) {
-        info.state = MEM_BLOCK_FREE;
-    } else if (buffer_list_has(pool->buff_head, ptr)) {
-        info.state = MEM_BLOCK_ALLOCATED;
-    } else {
-        info.state = MEM_BLOCK_UNKOWN;
-    }
-    unlock(pool);
-
-    return info;
+    return buffer_list_has(pool->buff_head, ptr);
 }
 
 void pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback)
@@ -109,7 +82,7 @@ void pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback)
     Buffer *buff = pool->buff_head;
 
     while (buff) {
-        for (void *block = buff->start; block < buff->current; block += pool->memb_size) {
+        for (void *block = buff->start; block < buff->curr_ptr; block += pool->memb_size) {
             if (0 != callback(block)) {
                 break;
             }

@@ -19,7 +19,7 @@ If it runs out of space, it'll create a new internal Buffer with `increase_count
 
 ... 
 
-MemPool *pool = pool_init(10, 10);
+MemPool *pool = pool_new(10, 10);
 ```
 
 Get a block:
