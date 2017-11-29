@@ -12,9 +12,9 @@ For a quick check, run `make test` or `make test-valgrind`
 ### How it works
 
 There are two main use cases when allocating:
-* <a name="fixed-pool">Fixed sized objects</a>
+* [Fixed sized objects](#fixed-pool)
     * This is useful when you want to store a large number of the same size of objects, this type of pool does a bit less work to allocate new blocks
-* <a name="variadic-pool">Variadic sized objects</a>
+* [Variadic sized objects](#variadic-pool)
     * This is basically a generic allocator, that is capable of allocating a **best fitting** block by storing some meta data:
 ```
     |                           Pool                            |
@@ -31,7 +31,7 @@ All the pointers returned by the pools are pointing to *aligned* blocks.
 
 To use the library you only need to `#include <mem_pool/mem_pool.h>`
 
-#### [FixedMemPool](#fixed-pool)
+#### <a name="fixed-pool">FixedMemPool</a>
 
 Initialization:
 
@@ -89,7 +89,7 @@ To actually free all the memory allocated:
 pool_fixed_destroy(pool);
 ```
 
-#### [VariadicMemPool](#variadic-pool)
+#### <a name="fixed-pool">(#variadic-pool)</a>
 
 This type of pool has a very similar API.
 
