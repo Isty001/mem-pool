@@ -38,7 +38,6 @@ Initialization:
 ```c
 #include "mem_pool.h"
 
-... 
 size_t block_size = sizeof(struct test);
 size_t increase_count = 500;
 
