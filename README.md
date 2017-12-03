@@ -36,8 +36,6 @@ To use the library you only need to `#include <mem_pool/mem_pool.h>`
 Initialization:
 
 ```c
-#include "mem_pool.h"
-
 size_t block_size = sizeof(struct test);
 size_t increase_count = 500;
 
