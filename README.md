@@ -54,7 +54,7 @@ void *ptr = pool_fixed_alloc(pool);
 It can make sense to iterate through a pool of objects when you know that all of them are of the same type:
 
 ```c
-static void callback(void *item)
+static int callback(void *item)
 {
     //
     return 0;
