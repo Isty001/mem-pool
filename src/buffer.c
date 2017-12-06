@@ -7,6 +7,7 @@ Buffer *buffer_new(size_t size)
     buff->start = malloc(size);
     buff->curr_ptr = buff->start;
     buff->next = NULL;
+    buff->prev_ptr = NULL;
     buff->end = buff->curr_ptr + size;
 
     return buff;

@@ -2,7 +2,7 @@
 #include <memory.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "../deps/minunit/minunit.h"
+#include "minunit.h"
 #include "../src/internals.h"
 
 
@@ -106,9 +106,54 @@ MU_TEST(test_alloc)
     pool_variadic_destroy(pool);
 }
 
+MU_TEST(test_complex_defragmentation)
+{
+    size_t header_size = mem_align(sizeof(Header));
+
+    char *a, *b, *c;
+    VariadicMemPool *pool = pool_variadic_init(200, MEM_NO_BEST_FIT);
+    a = pool_variadic_alloc(pool, sizeof(char));
+    b = pool_variadic_alloc(pool, sizeof(char));
+    c = pool_variadic_alloc(pool, sizeof(char));
+
+    *a = 'a';
+    *b = 'b';
+    *c = 'c';
+
+    mu_assert_int_eq('a', *a);
+    assert_size_in_header(sizeof(char), header_size, a);
+
+    mu_assert_int_eq('b', *b);
+    assert_size_in_header(sizeof(char), header_size, b);
+
+    mu_assert_int_eq('c', *c);
+    assert_size_in_header(sizeof(char), header_size, c);
+
+    // These three should be merged into one block
+    mu_assert_int_eq(0, pool_variadic_free(pool, c));
+    mu_assert_int_eq(0, pool_variadic_free(pool, a));
+    mu_assert_int_eq(0, pool_variadic_free(pool, b));
+
+    char *def = pool_variadic_alloc(pool, 3 * sizeof(char));
+
+    /**
+     * We set MEM_NO_BEST_FIT so we will retrieve the first free block which is was formed from
+     * the previous, *separately* allocated three aligned blocks and their aligned headers
+     * but it'll also keep space for its own new header
+     */
+    mu_assert_int_eq(
+            2 * mem_align(sizeof(Header)) + 3 * mem_align(sizeof(char)),
+            header_of(def, header_size)->size
+    );
+    mu_assert(def == a, "");
+
+    pool_variadic_destroy(pool);
+}
+
 void run_dynamic_pool_test(void)
 {
     MU_RUN_TEST(test_alloc);
+    MU_RUN_TEST(test_complex_defragmentation);
 
     MU_REPORT();
 }

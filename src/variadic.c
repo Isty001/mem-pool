@@ -14,7 +14,7 @@ struct SizedBlock {
 struct VariadicMemPool {
     size_t buff_size;
     size_t header_size;
-    size_t tolerance_percent;
+    int16_t tolerance_percent;
     Buffer *buff_head;
     Buffer *buff_last;
     SizedBlock *block_head;
@@ -22,7 +22,7 @@ struct VariadicMemPool {
 };
 
 
-VariadicMemPool *pool_variadic_init(size_t grow_size, size_t tolerance_percent)
+VariadicMemPool *pool_variadic_init(size_t grow_size, int16_t tolerance_percent)
 {
     VariadicMemPool *pool = malloc(sizeof(VariadicMemPool));
     pool->tolerance_percent = tolerance_percent;
@@ -52,13 +52,15 @@ static void *from_buffer(Buffer *buff, size_t header_size, size_t block_size)
 static void *best_fit_from_free_list(VariadicMemPool *pool, size_t required_size)
 {
     SizedBlock **curr = &pool->block_head;
-    long block_size, diff;
+    int64_t block_size, diff;
+    int16_t diff_percent;
 
     while (*curr) {
         block_size = (*curr)->header.size;
         diff = labs(block_size - (long)required_size);
+        diff_percent = (diff * 100) / ((block_size + required_size) / 2);
 
-        if ((diff * 100) / ((block_size + required_size) / 2) <= pool->tolerance_percent) {
+        if (MEM_NO_BEST_FIT == pool->tolerance_percent || diff_percent <= pool->tolerance_percent) {
             SizedBlock *block = *curr;
             *curr = (*curr)->next_in_free_list;
 
@@ -83,6 +85,7 @@ void *pool_variadic_alloc(VariadicMemPool *pool, size_t size)
 
         return ptr;
     }
+
     if (!buffer_has_space(buff, pool->header_size + block_size)) {
         buff->next = buffer_new(pool->header_size + max(pool->buff_size, block_size));
         buff = buff->next;
@@ -125,7 +128,7 @@ static SizedBlock *merge_next_free_blocks(VariadicMemPool *pool, Buffer *buff, S
     SizedBlock *next = NULL;
 
     while (1) {
-        next = block + block->header.size + pool->header_size;
+        next = (SizedBlock *)((char *)block + block->header.size + pool->header_size);
 
         if (buffer_has(buff, next) && delete_block_from_free_list(pool, next)) {
             block = append(block, next, pool->header_size);
@@ -142,12 +145,11 @@ static SizedBlock *merge_previous_free_blocks(VariadicMemPool *pool, SizedBlock 
     SizedBlock *prev = block->header.prev_in_buff;
 
     while (prev) {
-        if (delete_block_from_free_list(pool, prev)) {
-            block = append(prev, block, pool->header_size);
-            prev = prev->header.prev_in_buff;
-        } else {
+        if (!delete_block_from_free_list(pool, prev)) {
             break;
         }
+        block = append(prev, block, pool->header_size);
+        prev = prev->header.prev_in_buff;
     }
 
     return block;
@@ -166,7 +168,7 @@ int pool_variadic_free(VariadicMemPool *pool, void *ptr)
     lock(pool);
 
     Buffer *buff = buffer_list_find(pool->buff_head, ptr);
-    SizedBlock *new = ptr - pool->header_size;
+    SizedBlock *new = (SizedBlock *)((char *)ptr - pool->header_size);
 
     if (!buff) {
         unlock(pool);

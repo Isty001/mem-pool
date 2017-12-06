@@ -1,4 +1,4 @@
-CFLAGS += -std=c11 -g -Wall -Wextra -ftrapv -Wshadow -Wundef -Wcast-align -Wunreachable-code
+CFLAGS += -std=c11 -g -Wall -Wextra -ftrapv -Wshadow -Wundef -Wcast-align -Wunreachable-code -O1
 
 SRC = src/*.c
 TEST_SRC = test/*.c
@@ -22,9 +22,9 @@ install: build
 	sudo mkdir -p $(INCLUDE_DIR)
 	sudo cp include/*.h $(INCLUDE_DIR)
 
+#-D _POSIX_C_SOURCE=199309 Needed by minunit.h to enable time stuff
 compile-test: install
-	#				needed by minunit.h to enable time stuff
-	gcc $(CFLAGS) -D _POSIX_C_SOURCE=199309L $(TEST_SRC) -lmem_pool -o test.o
+		gcc $(CFLAGS) -D _POSIX_C_SOURCE=199309L $(TEST_SRC) -lmem_pool -o test.o
 
 test: compile-test
 	./test.o

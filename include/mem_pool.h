@@ -4,6 +4,10 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdint.h>
+
+
+#define MEM_NO_BEST_FIT -1
 
 
 typedef struct FixedMemPool FixedMemPool;
@@ -40,7 +44,7 @@ void pool_fixed_destroy(FixedMemPool *pool);
  * grow_size deremines the size of a new buffer required from malloc when no more free (fitting) space left
  * tolerance_percent is the maximum difference in percentage when looking for best fitting free blocks
  */
-VariadicMemPool *pool_variadic_init(size_t grow_size, size_t tolerance_percent);
+VariadicMemPool *pool_variadic_init(size_t grow_size, int16_t tolerance_percent);
 
 void *pool_variadic_alloc(VariadicMemPool *pool, size_t size);
 

@@ -2,7 +2,7 @@
 #include <stdalign.h>
 #include <stddef.h>
 #include <mem_pool/mem_pool.h>
-#include "../deps/minunit/minunit.h"
+#include "minunit.h"
 
 
 MU_TEST(test_pool)
