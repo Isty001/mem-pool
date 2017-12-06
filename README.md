@@ -1,4 +1,4 @@
-## Memory Pool
+# Memory Pool
 
 Dynamic memory pool implementation, for reusable fixed, or variadic sized memory blocks, using `pthread mutex` locks.
 
@@ -27,7 +27,7 @@ When allocating a given size of block, a header is also store which contains the
 
 All the pointers returned by the pools are pointing to *aligned* blocks.
 
-### Ussage & API
+## Ussage & API
 
 To use the library you only need to `#include <mem_pool/mem_pool.h>`
 
@@ -98,7 +98,8 @@ size_t tolerance_percent = 20;
 VariadicMemPool *pool = pool_variadic_init(grow_size, tolerance_percent);
 ```
 `grow_size` deremines the size of a new buffer required from malloc when no more free (fitting) space left. When trying to figure out a realistic size for your use case, take into account the it also includes the (aligned) size of the headers too.
-`tolerance_percent` is the maximum difference in percentage when looking for best fitting blocks from the free list.
+
+`tolerance_percent` is the maximum difference in percentage when looking for best fitting blocks from the free list. You can alternatively pas `MEM_NO_BEST_FIT` to skip this check.
 
 
 Get a block:
