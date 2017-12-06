@@ -1,9 +1,8 @@
 ## Memory Pool
 
-
 Dynamic memory pool implementation, for reusable fixed, or variadic sized memory blocks, using `pthread mutex` locks.
 
-### Installation with
+### Installation
 
 If you don't want to include the source in your project, you can install it as a dynamic library via `make install` and link against it with `-lmem_pool`
 
@@ -21,7 +20,8 @@ There are two main use cases when allocating:
     |       Buffer                |       Buffer                |
     | H | B     | H | B | H | B   | H| B |      H| B            |
 ```
-*H: Header B: Block*
+*H: Header 
+B: Actual Block*
 
 When allocating a given size of block, a header is also store which contains the size of the block, and pointer to the previous header in the buffer. This is required to merge neighbouring blocks when the pointer is given back to the pool, so it can be defragmented. The stored size also helps us to find the best fitting block from the free list.
 
@@ -31,14 +31,11 @@ All the pointers returned by the pools are pointing to *aligned* blocks.
 
 To use the library you only need to `#include <mem_pool/mem_pool.h>`
 
-#### <a name="fixed-pool">FixedMemPool</a>
+### <a name="fixed-pool">FixedMemPool</a>
 
 Initialization:
 
 ```c
-#include "mem_pool.h"
-
-... 
 size_t block_size = sizeof(struct test);
 size_t increase_count = 500;
 
@@ -89,7 +86,7 @@ To actually free all the memory allocated:
 pool_fixed_destroy(pool);
 ```
 
-#### <a name="variadic-pool">VariadicMemPool</a>
+### <a name="variadic-pool">VariadicMemPool</a>
 
 This type of pool has a very similar API.
 
