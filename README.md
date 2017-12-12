@@ -39,7 +39,7 @@ if (MEM_POOL_ERR_OK != (err = pool_*())) {
 }
 ```
 
-### <a name="fixed-pool">FixedMemPool</a>
+## <a name="fixed-pool">FixedMemPool</a>
 
 Initialization:
 
@@ -97,7 +97,7 @@ To actually `free` all the memory allocated:
 pool_fixed_destroy(pool);
 ```
 
-### <a name="variable-pool">VariableMemPool</a>
+## <a name="variable-pool">VariableMemPool</a>
 
 This type of pool has a very similar API.
 
