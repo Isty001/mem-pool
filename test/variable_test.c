@@ -101,10 +101,10 @@ MU_TEST(test_alloc)
     array[1].i = 30;
 
     memcpy(array[0].str, "Test", 4);
-    array[0].str[5] = '\0';
+    array[0].str[4] = '\0';
 
     memcpy(array[1].str, "C", 1);
-    array[1].str[2] = '\0';
+    array[1].str[1] = '\0';
 
     assert_initials(header_size, num, structure, array);
 
@@ -163,7 +163,7 @@ MU_TEST(test_complex_defragmentation)
     pool_variable_destroy(pool);
 }
 
-void run_dynamic_pool_test(void)
+void run_variable_pool_test(void)
 {
     MU_RUN_TEST(test_alloc);
     MU_RUN_TEST(test_complex_defragmentation);
