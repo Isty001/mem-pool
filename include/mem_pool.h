@@ -18,7 +18,15 @@ typedef struct FixedMemPool FixedMemPool;
 
 typedef struct VariableMemPool VariableMemPool;
 
-typedef int (*PoolForeach)(void *block);
+/**
+ * Return one of these from the callback function to either continue or stop the iteration
+ */
+typedef enum {
+    MEM_POOL_FOREACH_STOP,
+    MEM_POOL_FOREACH_CONTINUE
+} MemPoolForeachStatus;
+
+typedef MemPoolForeachStatus (*FixedPoolForeach)(void *block);
 
 typedef enum {
     MEM_POOL_ERR_OK,
@@ -31,7 +39,7 @@ typedef enum {
 } MemPoolError;
 
 /**
- * returns a new MemPool, with the given block size. If it runs out of space,
+ * initializes a new MemPool, with the given block size. If it runs out of space,
  * it'll create a new internal Buffer with increase_count * block_size size
  */
 MemPoolError pool_fixed_init(FixedMemPool **pool, size_t block_size, size_t increase_count);
@@ -43,7 +51,7 @@ bool pool_fixed_is_associated(FixedMemPool *pool, void *ptr);
 /**
  * Iterates through all the blocks allocated with the given pool
  */
-MemPoolError pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback);
+MemPoolError pool_fixed_foreach(FixedMemPool *pool, FixedPoolForeach callback);
 
 /**
  * The memory block is not actually freed, just given back to the pool to reuse it

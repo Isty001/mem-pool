@@ -84,7 +84,7 @@ bool pool_fixed_is_associated(FixedMemPool *pool, void *ptr)
     return buffer_list_has(pool->buff_head, ptr);
 }
 
-MemPoolError pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback)
+MemPoolError pool_fixed_foreach(FixedMemPool *pool, FixedPoolForeach callback)
 {
     lock(pool);
 
@@ -92,7 +92,7 @@ MemPoolError pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback)
 
     while (buff) {
         for (char *block = buff->start; block < (char *)buff->curr_ptr; block += pool->memb_size) {
-            if (0 != callback(block)) {
+            if (MEM_POOL_FOREACH_STOP == callback(block)) {
                 break;
             }
         }

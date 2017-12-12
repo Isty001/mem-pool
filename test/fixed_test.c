@@ -42,14 +42,14 @@ MU_TEST(test_pool)
 
 static int ADDED = 0;
 
-static int add_items(int *item)
+static MemPoolForeachStatus add_items(int *item)
 {
     if (50 == *item) {
-        return -1;
+        return MEM_POOL_FOREACH_STOP;
     }
     ADDED += *item;
 
-    return 0;
+    return MEM_POOL_FOREACH_CONTINUE;
 }
 
 MU_TEST(test_foreach)
@@ -67,7 +67,7 @@ MU_TEST(test_foreach)
     mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_alloc(pool, (void **)&c));
     *c = 50;
 
-    pool_fixed_foreach(pool, (PoolForeach) add_items);
+    pool_fixed_foreach(pool, (FixedPoolForeach) add_items);
 
     mu_assert_int_eq(300, ADDED);
 
