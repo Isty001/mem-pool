@@ -29,7 +29,15 @@ All the pointers returned by the pools are pointing to *aligned* blocks.
 
 ## Ussage & API
 
-To use the library you only need to `#include <mem_pool/mem_pool.h>`
+To use the library you only need to `#include <mem_pool/mem_pool.h>`. Every function return one of the `MemPoolError` enum values, thus making the error checking pretty simple.
+
+```C
+MemPoolErr err;
+
+if (MEM_POOL_ERR_OK != (err = pool_*())){
+   //handle err
+}
+```
 
 ### <a name="fixed-pool">FixedMemPool</a>
 
@@ -38,8 +46,9 @@ Initialization:
 ```c
 size_t block_size = sizeof(struct test);
 size_t increase_count = 500;
+FixedMemPool *pool
 
-FixedMemPool *pool = pool_fixed_init(block_size, increase_count);
+pool_fixed_init(&pool, block_size, increase_count);
 ```
 
 The pool'll be able to provide `block_size` blocks, and when it runs out of memory, will *actually* allocate a new internal buffer `increase_count` * `block_size size`
@@ -48,27 +57,30 @@ The pool'll be able to provide `block_size` blocks, and when it runs out of memo
 Get a block:
 
 ```c
-void *ptr = pool_fixed_alloc(pool);
+void *ptr;
+
+pool_fixed_alloc(pool, (void **)&ptr);
 ```
 
 It can make sense to iterate through a pool of objects when you know that all of them are of the same type:
 
 ```c
-static int callback(void *item)
+static MemPoolForeachStatus callback(void *item)
 {
-    //
-    return 0;
+    if (should_stop(item)) {
+         return MEM_POOL_FOREACH_STOP;
+    }
+
+    return MEM_POOL_FOREACH_CONTINUE;
 }
 
 pool_fixed_foreach(pool, callback);
 ```
 
-Return `0` to stop the iteration.
-
 To check if a pointer is from the pool:
 
 ```c
-if (pool_fixed_is_associated(pool, ptr)) { /* */ }
+if (MEM_POOL_ERR_OK == pool_fixed_is_associated(pool, ptr)) { /* */ }
 ```
 Won't check if the block is not used anymore.
 
@@ -95,23 +107,27 @@ Initialization:
 ```c
 size_t grow_size = 500; 
 size_t tolerance_percent = 20;
-VariableMemPool *pool = pool_variable_init(grow_size, tolerance_percent);
+VariableMemPool *pool;
+
+pool_variable_init(&pool, grow_size, tolerance_percent);
 ```
 `grow_size` deremines the size of a new buffer required from malloc when no more free (fitting) space left. When trying to figure out a realistic size for your use case, take into account the it also includes the (aligned) size of the headers too.
 
-`tolerance_percent` is the maximum difference in percentage when looking for best fitting blocks from the free list. You can alternatively pas `MEM_NO_BEST_FIT` to skip this check.
+`tolerance_percent` is the maximum difference in percentage when looking for best fitting blocks from the free list. You can alternatively pas `MEM_POOL_NO_BEST_FIT` to skip this check.
 
 
 Get a block:
 
 ```c
-void *ptr = pool_variable_alloc(pool, sizeof(some_type);
+void *ptr;
+
+pool_variable_alloc(pool, sizeof(some_type), (void **)&ptr);
 ```
 
 To check if a pointer is from the pool:
 
 ```c
-if (pool_variable_is_associated(pool, ptr)) { /* */ }
+if (MEM_POOL_ERR_OK == pool_variable_is_associated(pool, ptr)) { /* */ }
 ```
 Won't check if the block is not used anymore.
 
