@@ -79,9 +79,12 @@ MemPoolError pool_fixed_alloc(FixedMemPool *pool, void **ptr)
     return from_buffer(pool, buff, ptr);
 }
 
-bool pool_fixed_is_associated(FixedMemPool *pool, void *ptr)
+MemPoolError pool_fixed_is_associated(FixedMemPool *pool, void *ptr)
 {
-    return buffer_list_has(pool->buff_head, ptr);
+    MemPoolError err;
+    poool_is_associated(pool, ptr, err);
+
+    return err;
 }
 
 MemPoolError pool_fixed_foreach(FixedMemPool *pool, FixedPoolForeach callback)

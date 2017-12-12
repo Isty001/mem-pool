@@ -46,7 +46,10 @@ MemPoolError pool_fixed_init(FixedMemPool **pool, size_t block_size, size_t incr
 
 MemPoolError pool_fixed_alloc(FixedMemPool *pool, void **ptr);
 
-bool pool_fixed_is_associated(FixedMemPool *pool, void *ptr);
+/**
+ * @return MEM_POOL_ERR_OK if associated MEM_POOL_ERR_UNKNOWN if not, or the error indicating the failure
+ */
+MemPoolError pool_fixed_is_associated(FixedMemPool *pool, void *ptr);
 
 /**
  * Iterates through all the blocks allocated with the given pool
@@ -71,9 +74,9 @@ MemPoolError pool_variable_init(VariableMemPool **pool, size_t grow_size, int16_
 MemPoolError pool_variable_alloc(VariableMemPool *pool, size_t size, void **ptr);
 
 /**
- * @return MEM_POOL_ERR_(UN)KNOWN or any other error status on failure
+ * @return MEM_POOL_ERR_OK if associated MEM_POOL_ERR_UNKNOWN if not, or the error indicating the failure
  */
-bool pool_variable_is_associated(VariableMemPool *pool, void *ptr);
+MemPoolError pool_variable_is_associated(VariableMemPool *pool, void *ptr);
 
 /*
  * Before appending to the free list, this function will attempt to merge neighbouring memory blocks 

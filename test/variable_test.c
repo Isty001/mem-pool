@@ -82,12 +82,12 @@ MU_TEST(test_alloc)
 
     int *num;
     mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, sizeof(int), (void **)&num));
-    mu_assert(pool_variable_is_associated(pool, num), "Should be known by the pool");
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_is_associated(pool, num));
     *num = 100;
 
     struct test *structure;
     mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, sizeof(struct test), (void **)&structure));
-    mu_assert(pool_variable_is_associated(pool, structure), "Should be known by the pool");
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_is_associated(pool, structure));
 
     structure->i = 10;
     memcpy(structure->str, "Hello", 5);
@@ -95,7 +95,7 @@ MU_TEST(test_alloc)
 
     struct test *array;
     mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, 2 * sizeof(struct test), (void **)&array));
-    mu_assert(pool_variable_is_associated(pool, array), "Should be known by the pool");
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_is_associated(pool, array));
 
     array[0].i = 20;
     array[1].i = 30;
@@ -110,6 +110,8 @@ MU_TEST(test_alloc)
 
     test_defragmentation_in_first_buff(pool, num, structure);
     test_defragmentation_in_second_buff(pool, array);
+
+    mu_assert_int_eq(MEM_POOL_ERR_UNKNOWN_BLOCK, pool_variable_is_associated(pool, NULL));
 
     pool_variable_destroy(pool);
 }

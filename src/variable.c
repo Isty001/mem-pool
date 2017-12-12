@@ -114,9 +114,12 @@ static int delete_block_from_free_list(VariableMemPool *pool, SizedBlock *block)
     return 0;
 }
 
-bool pool_variable_is_associated(VariableMemPool *pool, void *ptr)
+MemPoolError pool_variable_is_associated(VariableMemPool *pool, void *ptr)
 {
-    return buffer_list_has(pool->buff_head, ptr);
+    MemPoolError err;
+    poool_is_associated(pool, ptr, err);
+
+    return err;
 }
 
 static SizedBlock *append(SizedBlock *to, SizedBlock *from, size_t header_size)

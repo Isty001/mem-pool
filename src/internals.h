@@ -31,6 +31,15 @@
     mutext_destroy(pool)                    \
     free(pool);
 
+#define poool_is_associated(pool, ptr, err)         \
+    lock(pool);                                     \
+    if (buffer_list_has(pool->buff_head, ptr)) {    \
+        err = MEM_POOL_ERR_OK;                      \
+    } else {                                        \
+        err = MEM_POOL_ERR_UNKNOWN_BLOCK;           \
+    }                                               \
+    unlock(pool)                                    \
+
 #define buffer_list_has(head, ptr) (NULL != buffer_list_find(head, ptr))
 
 
@@ -58,7 +67,6 @@ static inline size_t max(size_t a, size_t b)
 {
     return a > b ? a : b;
 }
-
 
 Buffer *buffer_new(size_t size);
 
