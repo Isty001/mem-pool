@@ -31,7 +31,7 @@ All the pointers returned by the pools are pointing to *aligned* blocks.
 
 To use the library you only need to `#include <mem_pool/mem_pool.h>`. Every function return one of the `MemPoolError` enum values, thus making the error checking pretty simple.
 
-```
+```C
 MemPoolErr err;
 
 if (MEM_POOL_ERR_OK != (err = pool_*())){
