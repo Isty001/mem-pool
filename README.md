@@ -23,18 +23,18 @@ There are two main use cases when allocating:
 *H: Header 
 B: Actual Block*
 
-When allocating a given size of block, a header is also store which contains the size of the block, and pointer to the previous header in the buffer. This is required to merge neighbouring blocks when the pointer is given back to the pool, so it can be defragmented. The stored size also helps us to find the best fitting block from the free list.
+When allocating a given size of block, a header is also stored which contains the size of the block, and pointer to the previous header in the buffer. This is required to merge neighbouring blocks when the pointer is given back to the pool, so it can be defragmented. The stored size also helps us to find the best fitting block from the free list.
 
-All the pointers returned by the pools are pointing to *aligned* blocks.
+All the pointers given by the pools are pointing to *aligned* blocks.
 
 ## Ussage & API
 
-To use the library you only need to `#include <mem_pool/mem_pool.h>`. Every function return one of the `MemPoolError` enum values, thus making the error checking pretty simple.
+To use the library you only need to `#include <mem_pool/mem_pool.h>`. Every function returns one of the `MemPoolError` enum values, thus making the error checking pretty simple.
 
 ```C
 MemPoolErr err;
 
-if (MEM_POOL_ERR_OK != (err = pool_*())){
+if (MEM_POOL_ERR_OK != (err = pool_*())) {
    //handle err
 }
 ```
@@ -85,14 +85,13 @@ if (MEM_POOL_ERR_OK == pool_fixed_is_associated(pool, ptr)) { /* */ }
 Won't check if the block is not used anymore.
 
 
-When not needed anymore, give the pointer back to the pool's free list, and make it reusable. This will return -1
-if the pointer is not known by the pool.
+When not needed anymore, give the pointer back to the pool's free list, and make it reusable. 
 
 ```c
 pool_fixed_free(pool, ptr);
 ```
 
-To actually free all the memory allocated:
+To actually `free` all the memory allocated:
 
 ```c
 pool_fixed_destroy(pool);
@@ -129,14 +128,13 @@ To check if a pointer is from the pool:
 ```c
 if (MEM_POOL_ERR_OK == pool_variable_is_associated(pool, ptr)) { /* */ }
 ```
-Won't check if the block is not used anymore.
 
 In order to make the piece of memory reusable:
 
 ```c
 pool_fixed_free(pool, ptr);
 ```
-Before appending to the free list, this function will attempt to merge neighbouring memory blocks (including the space used by their headers) in the given buffer. Will return -1 if the pointer is not known by the pool.
+Before appending to the free list, this function will attempt to merge neighbouring free memory blocks (including the space used by their headers) in the given buffer.
 
 To actually free all the memory allocated:
 
