@@ -1,2 +1,5 @@
 .idea/
-test.o
+*vim*
+*ycm*
+*.o
+*.so

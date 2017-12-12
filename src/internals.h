@@ -6,23 +6,29 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include "../include/mem_pool.h"
 
 
-#define check(res)                              \
-    if (0 != res) {                             \
-        fprintf(stderr, "pthread failure");     \
-        exit(EXIT_FAILURE);                     \
+#define check_pthread(res, err)     \
+    if (0 != (res)) {               \
+        return err;                 \
     }
 
-#define lock(pool) \
-    check(pthread_mutex_lock(&pool->mutex));
+#define mutex_init(pool)                                                            \
+    check_pthread(pthread_mutex_init(&pool->mutex, NULL), MEM_POOL_ERR_MUTEX_INIT);
 
-#define unlock(pool)                                \
-    check(pthread_mutex_unlock(&pool->mutex));
+#define mutext_destroy(pool) \
+    check_pthread(pthread_mutex_destroy(&pool->mutex), MEM_POOL_ERR_MUTEX_DESTROY);
+
+#define lock(pool)                                                      \
+    check_pthread(pthread_mutex_lock(&pool->mutex), MEM_POOL_ERR_LOCK);
+
+#define unlock(pool)                                                        \
+    check_pthread(pthread_mutex_unlock(&pool->mutex), MEM_POOL_ERR_UNLOCK);
 
 #define pool_destroy(pool)                  \
     buffer_list_destroy(pool->buff_head);   \
-    pthread_mutex_destroy(&pool->mutex);    \
+    mutext_destroy(pool)                    \
     free(pool);
 
 #define buffer_list_has(head, ptr) (NULL != buffer_list_find(head, ptr))
@@ -62,7 +68,7 @@ Buffer *buffer_list_find(Buffer *head, void *ptr);
 
 static inline bool buffer_has_space(Buffer *buff, size_t size)
 {
-    return buff->end - buff->curr_ptr >= (long)size;
+    return (char *)buff->end - (char *)buff->curr_ptr >= (long)size;
 }
 
 static inline bool buffer_has(Buffer *buff, void *ptr)

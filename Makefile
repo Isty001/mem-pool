@@ -13,18 +13,18 @@ INCLUDE_DIR = /usr/local/include/mem_pool
 
 
 build:
-	rm -f ./*.o
-	$(CC) $(CFLAGS) -lpthread -c -fpic $(SRC)
-	$(CC) -shared -fpic -o $(LIB) ./*.o
+	rm ./*.o
+	$(CC) $(CFLAGS) -c -fpic $(SRC)
+	$(CC) -shared -fpic -o $(LIB) ./*.o -lpthread
 
 install: build
 	sudo mv $(LIB) /usr/local/lib
 	sudo mkdir -p $(INCLUDE_DIR)
 	sudo cp include/*.h $(INCLUDE_DIR)
 
-#-D _POSIX_C_SOURCE=199309 Needed by minunit.h to enable time stuff
+#-D _POSIX_C_SOURCE=199309 Needed by minunit.h to enable some time related stuff
 compile-test: install
-		gcc $(CFLAGS) -D _POSIX_C_SOURCE=199309L $(TEST_SRC) -lmem_pool -o test.o
+	$(CC) $(CFLAGS) -D _POSIX_C_SOURCE=199309L $(TEST_SRC) -lmem_pool -o test.o
 
 test: compile-test
 	./test.o

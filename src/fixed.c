@@ -20,44 +20,53 @@ struct FixedMemPool {
 };
 
 
-FixedMemPool *pool_fixed_init(size_t block_size, size_t increase_count)
+MemPoolError pool_fixed_init(FixedMemPool **pool, size_t block_size, size_t increase_count)
 {
-    FixedMemPool *pool = malloc(sizeof(FixedMemPool));
-    pool->memb_size = mem_align(block_size < sizeof(Block) ? sizeof(Block) : block_size);
-    pool->buff_size = increase_count * pool->memb_size;
-    pool->buff_head = buffer_new(pool->buff_size);
-    pool->buff_last = pool->buff_head;
-    pool->block_head = NULL;
+    *pool = malloc(sizeof(FixedMemPool));
+    if (!*pool) {
+        return MEM_POOL_ERR_MALLOC;
+    }
+    (*pool)->memb_size = mem_align(max(block_size, sizeof(Block)));
+    (*pool)->buff_size = increase_count * (*pool)->memb_size;
+    (*pool)->buff_head = buffer_new((*pool)->buff_size);
 
-    check(pthread_mutex_init(&pool->mutex, NULL));
+    if (!(*pool)->buff_head) {
+        return MEM_POOL_ERR_MALLOC;
+    }
 
-    return pool;
+    (*pool)->buff_last = (*pool)->buff_head;
+    (*pool)->block_head = NULL;
+
+    mutex_init((*pool));
+
+    return MEM_POOL_ERR_OK;
 }
 
-static void *from_free_list(FixedMemPool *pool)
+static MemPoolError from_free_list(FixedMemPool *pool, void **ptr)
 {
     Block *tmp = pool->block_head;
     pool->block_head = tmp->next;
+    *ptr = tmp;
     unlock(pool);
 
-    return tmp;
+    return MEM_POOL_ERR_OK;
 }
 
-static void *from_buffer(FixedMemPool *pool, Buffer *buff)
+static MemPoolError from_buffer(FixedMemPool *pool, Buffer *buff, void **ptr)
 {
-    void *ptr = buff->curr_ptr;
+    *ptr = buff->curr_ptr;
     buff->curr_ptr += pool->memb_size;
     unlock(pool);
 
-    return ptr;
+    return MEM_POOL_ERR_OK;
 }
 
-void *pool_fixed_alloc(FixedMemPool *pool)
+MemPoolError pool_fixed_alloc(FixedMemPool *pool, void **ptr)
 {
     lock(pool);
 
     if (pool->block_head) {
-        return from_free_list(pool);
+        return from_free_list(pool, ptr);
     }
     Buffer *buff = pool->buff_last;
 
@@ -67,7 +76,7 @@ void *pool_fixed_alloc(FixedMemPool *pool)
         pool->buff_last = buff;
     }
 
-    return from_buffer(pool, buff);
+    return from_buffer(pool, buff, ptr);
 }
 
 bool pool_fixed_is_associated(FixedMemPool *pool, void *ptr)
@@ -75,14 +84,14 @@ bool pool_fixed_is_associated(FixedMemPool *pool, void *ptr)
     return buffer_list_has(pool->buff_head, ptr);
 }
 
-void pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback)
+MemPoolError pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback)
 {
     lock(pool);
 
     Buffer *buff = pool->buff_head;
 
     while (buff) {
-        for (void *block = buff->start; block < buff->curr_ptr; block += pool->memb_size) {
+        for (char *block = buff->start; block < (char *)buff->curr_ptr; block += pool->memb_size) {
             if (0 != callback(block)) {
                 break;
             }
@@ -90,27 +99,32 @@ void pool_fixed_foreach(FixedMemPool *pool, PoolForeach callback)
         buff = buff->next;
     }
     unlock(pool);
+
+    return MEM_POOL_ERR_OK;
 }
 
-int pool_fixed_free(FixedMemPool *pool, void *ptr)
+MemPoolError pool_fixed_free(FixedMemPool *pool, void *ptr)
 {
     lock(pool);
 
     if (!buffer_list_has(pool->buff_head, ptr)) {
         unlock(pool);
-        return -1;
+        return MEM_POOL_ERR_UNKNOWN_BLOCK;
     }
 
     Block *new = (Block *) ptr;
     Block *tmp = pool->block_head;
     pool->block_head = new;
     new->next = tmp;
+
     unlock(pool);
 
-    return 0;
+    return MEM_POOL_ERR_OK;
 }
 
-void pool_fixed_destroy(FixedMemPool *pool)
+MemPoolError pool_fixed_destroy(FixedMemPool *pool)
 {
     pool_destroy(pool);
+
+    return MEM_POOL_ERR_OK;
 }

@@ -12,13 +12,14 @@ MU_TEST(test_pool)
 
     expected = expected + (align - expected % align);
 
-    FixedMemPool *pool = pool_fixed_init(10, 2);
+    FixedMemPool *pool;
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_init(&pool, 10, 2));
 
     void *ptr1, *ptr2, *ptr3, *ptr4, *prev;
 
-    ptr1 = pool_fixed_alloc(pool);
-    ptr2 = pool_fixed_alloc(pool);
-    ptr3 = pool_fixed_alloc(pool);
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_alloc(pool, &ptr1));
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_alloc(pool, &ptr2));
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_alloc(pool, &ptr3));
 
     mu_assert_int_eq(expected, ptr2 - ptr1);
     mu_assert(ptr3 - ptr2 > expected, "This should be in a new Buffer");
@@ -27,15 +28,16 @@ MU_TEST(test_pool)
     mu_assert(pool_fixed_is_associated(pool, ptr2), "This should be allocated");
 
     prev = ptr1;
-    pool_fixed_free(pool, ptr1);
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_free(pool, ptr1));
 
-    ptr4 = pool_fixed_alloc(pool);
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_alloc(pool, &ptr4));
     mu_assert(prev == ptr4, "The same pointer should be returned from the free list");
 
     void *unknown = NULL;
     mu_assert(false == pool_fixed_is_associated(pool, unknown), "This shouldn't be known by the Pool");
+    mu_assert_int_eq(MEM_POOL_ERR_UNKNOWN_BLOCK, pool_fixed_free(pool, unknown));
 
-    pool_fixed_destroy(pool);
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_destroy(pool));
 }
 
 static int ADDED = 0;
@@ -52,14 +54,17 @@ static int add_items(int *item)
 
 MU_TEST(test_foreach)
 {
-    FixedMemPool *pool = pool_fixed_init(sizeof(int), 2);
+    FixedMemPool *pool;
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_init(&pool, sizeof(int), 2));
     int *a, *b, *c;
 
-    a = pool_fixed_alloc(pool);
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_alloc(pool, (void **)&a));
     *a = 100;
-    b = pool_fixed_alloc(pool);
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_alloc(pool, (void **)&b));
     *b = 200;
-    c = pool_fixed_alloc(pool);
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_fixed_alloc(pool, (void **)&c));
     *c = 50;
 
     pool_fixed_foreach(pool, (PoolForeach) add_items);
