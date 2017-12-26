@@ -132,7 +132,7 @@ if (MEM_POOL_ERR_OK == pool_variable_is_associated(pool, ptr)) { /* */ }
 In order to make the piece of memory reusable:
 
 ```c
-pool_fixed_free(pool, ptr);
+pool_variable_free(pool, ptr);
 ```
 Before appending to the free list, this function will attempt to merge neighbouring free memory blocks (including the space used by their headers) in the given buffer.
 
