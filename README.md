@@ -129,7 +129,10 @@ To check if a pointer is from the pool:
 if (MEM_POOL_ERR_OK == pool_variable_is_associated(pool, ptr)) { /* */ }
 ```
 
-The pool is able to tell the *aligned* size of the block via `pool_variable_aligned_sizeof(pool, ptr, &size)`
+The pool is able to tell the *aligned* size of the block via 
+```c
+pool_variable_aligned_sizeof(pool, ptr, &size)
+```
 
 In order to make the piece of memory reusable:
 
