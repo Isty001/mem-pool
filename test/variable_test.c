@@ -1,5 +1,6 @@
 #include <mem_pool/mem_pool.h>
 #include <memory.h>
+#include <string.h>
 #include <stddef.h>
 #include <stdint.h>
 #include "minunit.h"
@@ -163,10 +164,34 @@ MU_TEST(test_complex_defragmentation)
     pool_variable_destroy(pool);
 }
 
+MU_TEST(test_sizeof)
+{
+    VariableMemPool *pool;
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_init(&pool, 200, 10));
+
+    void *a, *b, *c;
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, 60, &a));
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, 600, &c));
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, 12, &b));
+
+    size_t size = 0;
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_aligned_sizeof(pool, c, &size));
+    mu_assert_int_eq(mem_align(600), size);
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_aligned_sizeof(pool, a, &size));
+    mu_assert_int_eq(mem_align(60), size);
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_aligned_sizeof(pool, b, &size));
+    mu_assert_int_eq(mem_align(12), size);
+}
+
 void run_variable_pool_test(void)
 {
     MU_RUN_TEST(test_alloc);
     MU_RUN_TEST(test_complex_defragmentation);
+    MU_RUN_TEST(test_sizeof);
 
     MU_REPORT();
 }

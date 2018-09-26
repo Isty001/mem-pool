@@ -86,6 +86,7 @@ MemPoolError pool_variable_free(VariableMemPool *pool, void *ptr);
 
 MemPoolError pool_variable_destroy(VariableMemPool *pool);
 
+MemPoolError pool_variable_aligned_sizeof(VariableMemPool *pool, void *ptr, size_t *size);
 
 /**
  * Rounds up the size to the correct alignment

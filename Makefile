@@ -13,7 +13,7 @@ INCLUDE_DIR = /usr/local/include/mem_pool
 
 
 build:
-	rm ./*.o
+	rm -f ./*.o
 	$(CC) $(CFLAGS) -c -fpic $(SRC)
 	$(CC) -shared -fpic -o $(LIB) ./*.o -lpthread
 

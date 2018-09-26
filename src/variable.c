@@ -191,6 +191,22 @@ MemPoolError pool_variable_free(VariableMemPool *pool, void *ptr)
     return MEM_POOL_ERR_OK;
 }
 
+MemPoolError pool_variable_aligned_sizeof(VariableMemPool *pool, void *ptr, size_t *size)
+{
+    lock(pool);
+
+    if (!buffer_list_find(pool->buff_head, ptr)) {
+        return MEM_POOL_ERR_UNKNOWN_BLOCK;
+    }
+
+    SizedBlock *block = (SizedBlock *)((char *)ptr - pool->header_size);
+    *size = block->header.size;;
+
+    unlock(pool);
+
+    return MEM_POOL_ERR_OK;
+}
+
 MemPoolError pool_variable_destroy(VariableMemPool *pool)
 {
     pool_destroy(pool);
