@@ -92,6 +92,7 @@ MemPoolError pool_variable_alloc(VariableMemPool *pool, size_t size, void **ptr)
     if (!buffer_has_space(buff, pool->header_size + block_size)) {
         buff->next = buffer_new(pool->header_size + max(pool->buff_size, block_size));
         buff = buff->next;
+        pool->buff_last = buff;
     }
     *ptr = from_buffer(buff, pool->header_size, block_size);
     unlock(pool);

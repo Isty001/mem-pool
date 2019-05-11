@@ -185,6 +185,26 @@ MU_TEST(test_sizeof)
 
     mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_aligned_sizeof(pool, b, &size));
     mu_assert_int_eq(mem_align(12), size);
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_destroy(pool));
+}
+
+MU_TEST(test_multi_blocks)
+{
+    VariableMemPool *pool;
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_init(&pool, 1, 10));
+
+    void *a, *b, *c;
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, 60, &a));
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, 600, &c));
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_alloc(pool, 12, &b));
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_free(pool, a));
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_free(pool, b));
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_free(pool, c));
+
+    mu_assert_int_eq(MEM_POOL_ERR_OK, pool_variable_destroy(pool));
 }
 
 void run_variable_pool_test(void)
@@ -192,6 +212,7 @@ void run_variable_pool_test(void)
     MU_RUN_TEST(test_alloc);
     MU_RUN_TEST(test_complex_defragmentation);
     MU_RUN_TEST(test_sizeof);
+    MU_RUN_TEST(test_multi_blocks);
 
     MU_REPORT();
 }
