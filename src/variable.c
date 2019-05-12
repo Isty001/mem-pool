@@ -10,7 +10,7 @@ struct SizedBlock {
 struct VariableMemPool {
     size_t buff_size;
     size_t header_size;
-    int16_t tolerance_percent;
+    uint16_t tolerance_percent;
     Buffer *buff_head;
     Buffer *buff_last;
     SizedBlock *block_head;
@@ -18,13 +18,14 @@ struct VariableMemPool {
 };
 
 
-MemPoolError pool_variable_init(VariableMemPool **pool, size_t grow_size, int16_t tolerance_percent)
+MemPoolError pool_variable_init(VariableMemPool **pool, size_t grow_size, uint16_t tolerance_percent)
 {
     *pool = malloc(sizeof(VariableMemPool));
     if (!*pool) {
         return MEM_POOL_ERR_MALLOC;
     }
-    (*pool)->tolerance_percent = max(MEM_POOL_NO_BEST_FIT, tolerance_percent);
+    /* (*pool)->tolerance_percent = tolerance_percent <= MEM_POOL_NO_BEST_FIT ? MEM_POOL_NO_BEST_FIT : tolerance_percent; */
+    (*pool)->tolerance_percent = tolerance_percent >= MEM_POOL_NO_BEST_FIT ? MEM_POOL_NO_BEST_FIT : tolerance_percent;
     (*pool)->header_size = mem_align(sizeof(Header));
     (*pool)->buff_size = grow_size;
     (*pool)->buff_head = buffer_new(grow_size);
@@ -43,9 +44,9 @@ MemPoolError pool_variable_init(VariableMemPool **pool, size_t grow_size, int16_
 
 static void *from_buffer(Buffer *buff, size_t header_size, size_t block_size)
 {
-    Header *header = buff->curr_ptr;
+    Header *header = (void *) buff->curr_ptr;
     header->size = block_size;
-    header->prev_in_buff = buff->prev_ptr;
+    header->prev_in_buff = (void *) buff->prev_ptr;
 
     buff->prev_ptr = buff->curr_ptr;
     buff->curr_ptr += (header_size + block_size);
@@ -56,13 +57,14 @@ static void *from_buffer(Buffer *buff, size_t header_size, size_t block_size)
 static void *best_fit_from_free_list(VariableMemPool *pool, size_t required_size)
 {
     SizedBlock **curr = &pool->block_head;
-    int64_t block_size, diff;
-    int16_t diff_percent;
+    size_t block_size;
+    long diff;
+    size_t diff_percent;
 
     while (*curr) {
         block_size = (*curr)->header.size;
-        diff = labs(block_size - (long)required_size);
-        diff_percent = (diff * 100) / ((block_size + required_size) / 2);
+        diff = labs((long) block_size - (long) required_size);
+        diff_percent = ((size_t) diff * 100) / ((block_size + required_size) / 2);
 
         if (MEM_POOL_NO_BEST_FIT == pool->tolerance_percent || diff_percent <= pool->tolerance_percent) {
             SizedBlock *block = *curr;
@@ -132,7 +134,7 @@ static SizedBlock *append(SizedBlock *to, SizedBlock *from, size_t header_size)
 
 static SizedBlock *merge_next_free_blocks(VariableMemPool *pool, Buffer *buff, SizedBlock *block)
 {
-    SizedBlock *next = NULL;
+    void *next = NULL;
 
     while (1) {
         next = (SizedBlock *)((char *)block + block->header.size + pool->header_size);

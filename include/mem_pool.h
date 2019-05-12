@@ -11,7 +11,8 @@
  * Pass this as the second argument to pool_variable_init if you wan to skip
  * best fit checks
  */
-#define MEM_POOL_NO_BEST_FIT -1
+/* #define MEM_POOL_NO_BEST_FIT 101 */
+static const uint16_t MEM_POOL_NO_BEST_FIT = 101;
 
 
 typedef struct FixedMemPool FixedMemPool;
@@ -68,8 +69,9 @@ MemPoolError pool_fixed_destroy(FixedMemPool *pool);
 /**
  * grow_size deremines the size of a new buffer required from malloc when no more free (fitting) space left
  * tolerance_percent is the maximum difference in percentage when looking for best fitting free blocks
+ * if not reuqired, use MEM_POOL_NO_BEST_FIT
  */
-MemPoolError pool_variable_init(VariableMemPool **pool, size_t grow_size, int16_t tolerance_percent);
+MemPoolError pool_variable_init(VariableMemPool **pool, size_t grow_size, uint16_t tolerance_percent);
 
 MemPoolError pool_variable_alloc(VariableMemPool *pool, size_t size, void **ptr);
 

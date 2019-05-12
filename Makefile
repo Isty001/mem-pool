@@ -1,5 +1,4 @@
 CFLAGS += -std=c11 -g -Wall -Wextra -ftrapv -Wshadow -Wundef -Wcast-align -Wunreachable-code -O1
-
 SRC = src/*.c
 TEST_SRC = test/*.c
 
