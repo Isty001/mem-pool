@@ -1,15 +1,22 @@
+#include <memory.h>
 #include "internals.h"
-
 
 Buffer *buffer_new(size_t size)
 {
     Buffer *buff = malloc(sizeof(Buffer));
+
     if (!buff) {
         return NULL;
     }
 
     buff->start = malloc(size);
+
     if (!buff->start) {
+        free(buff);
+        return NULL;
+    }
+
+    if (!memset(buff->start, 0, size)) {
         free(buff);
         return NULL;
     }
