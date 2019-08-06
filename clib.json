@@ -1,0 +1,9 @@
+{
+  "name": "mem-pool",
+  "version": "1.1.2",
+  "repo": "isty001/mem-pool",
+  "description": "Dynamic memory pool implementation, for reusable fixed, or variable sized memory blocks, using pthread mutex locks",
+  "keywords": ["memory-pool", "memory", "pool", "pthread", "c", "alignment", "mutex", "memorypool", "locks", "buffer", "variable"],
+  "license": "MIT",
+  "src": ["src/buffer.c", "src/fixed.c", "src/internals.h", "src/utils.c", "src/variable.c", "include/mem_pool.h"]
+}
