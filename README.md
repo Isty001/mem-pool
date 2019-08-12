@@ -8,6 +8,8 @@ If you don't want to include the source in your project, you can install it as a
 
 For a quick check, run `make test` or `make test-valgrind` 
 
+You can also install via [`clib`](https://github.com/clibs/clib): `clib install Isty001/mem-pool`
+
 ### How it works
 
 There are two main use cases when allocating:
