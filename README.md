@@ -148,3 +148,4 @@ To actually free all the memory allocated:
 ```c
 pool_variable_destroy(pool);
 ```
+
