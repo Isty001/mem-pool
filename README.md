@@ -33,7 +33,7 @@ All the pointers given by the pools are pointing to *aligned* blocks.
 
 To use the library you only need to `#include <mem_pool/mem_pool.h>`. Every function returns one of the `MemPoolError` enum values, thus making the error checking pretty simple.
 
-```
+```c
 MemPoolErr err;
 
 if (MEM_POOL_ERR_OK != (err = pool_*())) {
@@ -45,7 +45,7 @@ if (MEM_POOL_ERR_OK != (err = pool_*())) {
 
 Initialization:
 
-```
+```c
 size_t block_size = sizeof(struct test);
 size_t increase_count = 500;
 FixedMemPool *pool
@@ -58,7 +58,7 @@ The pool'll be able to provide `block_size` blocks, and when it runs out of memo
 
 Get a block:
 
-```
+```c
 void *ptr;
 
 pool_fixed_alloc(pool, (void **)&ptr);
@@ -66,7 +66,7 @@ pool_fixed_alloc(pool, (void **)&ptr);
 
 It can make sense to iterate through a pool of objects when you know that all of them are of the same type:
 
-```
+```c
 static MemPoolForeachStatus callback(void *item)
 {
     if (should_stop(item)) {
@@ -81,7 +81,7 @@ pool_fixed_foreach(pool, callback);
 
 To check if a pointer is from the pool:
 
-```
+```c
 if (MEM_POOL_ERR_OK == pool_fixed_is_associated(pool, ptr)) { /* */ }
 ```
 Won't check if the block is not used anymore.
@@ -89,13 +89,13 @@ Won't check if the block is not used anymore.
 
 When not needed anymore, give the pointer back to the pool's free list, and make it reusable. 
 
-```
+```c
 pool_fixed_free(pool, ptr);
 ```
 
 To actually `free` all the memory allocated:
 
-```
+```c
 pool_fixed_destroy(pool);
 ```
 
@@ -105,7 +105,7 @@ This type of pool has a very similar API.
 
 Initialization:
 
-```
+```c
 size_t grow_size = 500; 
 size_t tolerance_percent = 20;
 VariableMemPool *pool;
@@ -119,7 +119,7 @@ pool_variable_init(&pool, grow_size, tolerance_percent);
 
 Get a block:
 
-```
+```c
 void *ptr;
 
 pool_variable_alloc(pool, sizeof(some_type), (void **)&ptr);
@@ -127,24 +127,24 @@ pool_variable_alloc(pool, sizeof(some_type), (void **)&ptr);
 
 To check if a pointer is from the pool:
 
-```
+```c
 if (MEM_POOL_ERR_OK == pool_variable_is_associated(pool, ptr)) { /* */ }
 ```
 
 The pool is able to tell the *aligned* size of the block via 
-```
+```c
 pool_variable_aligned_sizeof(pool, ptr, &size)
 ```
 
 In order to make the piece of memory reusable:
 
-```
+```c
 pool_variable_free(pool, ptr);
 ```
 Before appending to the free list, this function will attempt to merge neighbouring free memory blocks (including the space used by their headers) in the given buffer.
 
 To actually free all the memory allocated:
 
-```
+```c
 pool_variable_destroy(pool);
 ```
