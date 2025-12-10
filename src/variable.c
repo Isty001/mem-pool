@@ -199,6 +199,7 @@ MemPoolError pool_variable_aligned_sizeof(VariableMemPool *pool, void *ptr, size
     lock(pool);
 
     if (!buffer_list_find(pool->buff_head, ptr)) {
+        unlock(pool);
         return MEM_POOL_ERR_UNKNOWN_BLOCK;
     }
 
